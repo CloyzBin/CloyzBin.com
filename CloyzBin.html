@@ -1,0 +1,771 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes, viewport-fit=cover">
+  <title>CloyzBin · OSINT Community</title>
+  <!-- Font Awesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <style>
+    /* ----- ТЕМЫ ----- */
+    :root {
+      --bg: #0a0c10; --card: #1e1e2f; --text: #e3e6ea; --accent: #2ecc71;
+      --border: #2a2f3a; --input: #0f1219; --hover: #2a2f40;
+      --danger: #c0392b; --warning: #f39c12;
+    }
+    body.light {
+      --bg: #f5f7fa; --card: #ffffff; --text: #1e1e2f; --accent: #2ecc71;
+      --border: #ddd; --input: #f0f2f5; --hover: #e9ecef;
+      --danger: #c0392b; --warning: #f39c12;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', 'Roboto', sans-serif; }
+    body { background: var(--bg); color: var(--text); height: 100vh; display: flex; flex-direction: column; transition: background 0.2s; }
+    .app { max-width: 1400px; margin: 0 auto; padding: 0 12px; width: 100%; flex: 1; display: flex; flex-direction: column; }
+    
+    /* ----- ШАПКА ----- */
+    .header { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid var(--border); }
+    .logo { font-size: 24px; font-weight: 700; color: var(--accent); display: flex; align-items: center; gap: 8px; }
+    .nav { display: flex; flex-wrap: wrap; gap: 4px; }
+    .nav-btn {
+      background: transparent; border: none; color: var(--text); opacity: 0.8;
+      padding: 6px 12px; border-radius: 30px; cursor: pointer; display: flex; align-items: center; gap: 6px;
+      font-size: 14px; transition: all 0.2s; white-space: nowrap;
+    }
+    .nav-btn i { font-size: 15px; }
+    .nav-btn:hover { background: var(--hover); opacity: 1; }
+    .nav-btn.active { background: var(--accent); color: #0a0c10; opacity: 1; font-weight: 600; }
+    .user-area { display: flex; align-items: center; gap: 10px; background: var(--card); padding: 4px 12px; border-radius: 40px; border: 1px solid var(--border); }
+    .badge-icon {
+      display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 20px;
+      margin-left: 4px; font-size: 11px; background: var(--warning); color: #0a0c10;
+    }
+    .admin-badge { background: var(--danger); color: white; padding: 2px 8px; border-radius: 20px; margin-left: 4px; font-size: 11px; }
+    .mod-badge { background: var(--accent); color: #0a0c10; padding: 2px 8px; border-radius: 20px; margin-left: 4px; font-size: 11px; }
+    .logout-btn, .accounts-btn { background: none; border: 1px solid var(--border); color: var(--text); padding: 4px 10px; border-radius: 20px; cursor: pointer; font-size: 13px; }
+    
+    /* ----- СЕКЦИИ ----- */
+    .section { display: none; flex: 1; padding: 16px 0; }
+    .section.active { display: block; }
+    h2 { margin-bottom: 20px; display: flex; align-items: center; gap: 10px; font-weight: 600; }
+    h2 i { color: var(--accent); }
+    
+    /* Карточки кейсов */
+    .cases-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; }
+    .case-card {
+      background: var(--card); border-radius: 18px; padding: 20px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.2); border-left: 4px solid var(--accent);
+      cursor: pointer; transition: transform 0.2s;
+    }
+    .case-card:hover { transform: translateY(-3px); }
+    .case-card h3 { margin-bottom: 10px; color: var(--accent); }
+    .case-card p { opacity: 0.9; font-size: 14px; margin-bottom: 12px; }
+    .case-card small { opacity: 0.6; font-size: 12px; }
+    
+    /* Формы */
+    .form-card { background: var(--card); max-width: 550px; margin: 20px auto; padding: 28px; border-radius: 28px; }
+    .form-group { margin-bottom: 20px; }
+    label { display: block; margin-bottom: 8px; font-weight: 500; }
+    input, textarea, select {
+      width: 100%; padding: 12px 16px; background: var(--input); border: 1px solid var(--border);
+      border-radius: 16px; color: var(--text); font-size: 15px; outline: none;
+    }
+    input:focus, textarea:focus, select:focus { border-color: var(--accent); }
+    .btn {
+      background: var(--accent); border: none; color: #0a0c10; font-weight: bold;
+      padding: 12px 24px; border-radius: 40px; cursor: pointer; width: 100%; font-size: 16px;
+    }
+    .btn-small {
+      padding: 6px 14px; width: auto; display: inline-flex; align-items: center; gap: 6px;
+      border-radius: 30px; font-size: 13px; background: var(--accent); color: #0a0c10; border: none; cursor: pointer;
+    }
+    .btn-danger { background: var(--danger); color: white; }
+    .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text); }
+    
+    /* Аватар */
+    .avatar {
+      width: 44px; height: 44px; border-radius: 50%; background: var(--input);
+      display: flex; align-items: center; justify-content: center; overflow: hidden;
+      border: 2px solid var(--accent); flex-shrink: 0;
+    }
+    .avatar img { width: 100%; height: 100%; object-fit: cover; }
+    
+    /* Модальные окна */
+    .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); align-items: center; justify-content: center; z-index: 2000; }
+    .modal.active { display: flex; }
+    .modal-content { background: var(--card); max-width: 480px; width: 90%; border-radius: 28px; padding: 28px; position: relative; max-height: 80vh; overflow-y: auto; }
+    .modal-close { position: absolute; top: 16px; right: 20px; font-size: 24px; cursor: pointer; opacity: 0.7; }
+    .modal-close:hover { opacity: 1; }
+    
+    /* Чат (Telegram‑стиль) */
+    .chat-container { display: flex; height: calc(100vh - 100px); background: var(--bg); border-radius: 24px; overflow: hidden; border: 1px solid var(--border); margin-top: 10px; }
+    .chat-sidebar { width: 300px; background: var(--card); border-right: 1px solid var(--border); display: flex; flex-direction: column; }
+    .chat-sidebar-header { padding: 16px; font-weight: 600; border-bottom: 1px solid var(--border); }
+    .dialog-item {
+      display: flex; align-items: center; gap: 12px; padding: 12px 16px; cursor: pointer;
+      border-bottom: 1px solid var(--border); transition: background 0.2s;
+    }
+    .dialog-item:hover, .dialog-item.active { background: var(--hover); }
+    .dialog-avatar { width: 48px; height: 48px; }
+    .dialog-info { flex: 1; min-width: 0; }
+    .dialog-name { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .dialog-lastmsg { font-size: 12px; opacity: 0.7; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .chat-main { flex: 1; display: flex; flex-direction: column; background: var(--bg); }
+    .chat-header { padding: 12px 20px; background: var(--card); border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 14px; }
+    .chat-avatar { width: 44px; height: 44px; }
+    .chat-header-info { flex: 1; }
+    .chat-header-name { font-weight: 600; }
+    .chat-header-status { font-size: 13px; opacity: 0.7; }
+    .chat-messages { flex: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
+    .message { display: flex; gap: 10px; max-width: 80%; }
+    .message.own { align-self: flex-end; flex-direction: row-reverse; }
+    .message-avatar { width: 34px; height: 34px; }
+    .message-content {
+      background: var(--card); padding: 10px 14px; border-radius: 18px;
+      border: 1px solid var(--border); word-break: break-word;
+    }
+    .own .message-content { background: var(--accent); color: #0a0c10; border: none; }
+    .message-meta { display: flex; justify-content: flex-end; gap: 6px; margin-top: 4px; font-size: 11px; opacity: 0.7; }
+    .message-actions { display: flex; gap: 6px; margin-top: 4px; }
+    .chat-input-area { padding: 14px 20px; background: var(--card); border-top: 1px solid var(--border); display: flex; gap: 10px; align-items: center; }
+    .chat-input-area input { flex: 1; }
+    .empty-chat { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; opacity: 0.7; }
+    .sticker { font-size: 64px; margin-bottom: 16px; }
+    
+    /* Админ‑панель */
+    .admin-tabs { display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; }
+    .admin-tab { background: var(--card); border: 1px solid var(--border); }
+    .admin-tab.active { background: var(--accent); color: #0a0c10; }
+    .list-item {
+      background: var(--card); padding: 14px 18px; border-radius: 18px; margin-bottom: 10px;
+      border: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between;
+    }
+    
+    /* Адаптив */
+    @media (max-width: 700px) {
+      .header { flex-direction: column; gap: 10px; }
+      .nav { justify-content: center; }
+      .chat-sidebar { width: 100%; }
+      .chat-container { flex-direction: column; height: auto; min-height: 80vh; }
+    }
+  </style>
+</head>
+<body>
+<div class="app">
+  <!-- Шапка -->
+  <header class="header">
+    <div class="logo"><i class="fas fa-binoculars"></i> CloyzBin</div>
+    <div class="nav" id="nav-tabs"></div>
+    <div class="user-area" id="userArea"></div>
+  </header>
+
+  <!-- Основной контент -->
+  <main id="mainContent"></main>
+</div>
+
+<!-- Модальные окна -->
+<div class="modal" id="caseModal"><div class="modal-content"><span class="modal-close" onclick="this.closest('.modal').classList.remove('active')">&times;</span><h2 id="modalTitle"></h2><div id="modalBody"></div></div></div>
+<div class="modal" id="accountsModal"><div class="modal-content"><span class="modal-close" onclick="this.closest('.modal').classList.remove('active')">&times;</span><h3>Управление аккаунтами</h3><div id="accountsList"></div><button class="btn" id="addAccountBtn" style="margin-top:16px;"><i class="fas fa-plus"></i> Добавить аккаунт</button></div></div>
+<div class="modal" id="badgeModal"><div class="modal-content"><span class="modal-close" onclick="this.closest('.modal').classList.remove('active')">&times;</span><h3>Выдать значок</h3><select id="badgeSelect" class="form-group"></select><div id="customBadgeGroup" style="display:none;"><input type="text" id="customBadgeInput" placeholder="Свой значок"></div><button class="btn" id="confirmBadgeBtn">Выдать</button><input type="hidden" id="badgeUserId"></div></div>
+<div class="modal" id="blockModal"><div class="modal-content"><span class="modal-close" onclick="this.closest('.modal').classList.remove('active')">&times;</span><h3>Блокировка пользователя</h3><textarea id="blockReasonInput" rows="3" placeholder="Причина блокировки"></textarea><button class="btn btn-danger" id="confirmBlockBtn">Заблокировать</button><input type="hidden" id="blockUserId"></div></div>
+<div class="modal" id="reportModal"><div class="modal-content"><span class="modal-close" onclick="this.closest('.modal').classList.remove('active')">&times;</span><h3>Пожаловаться на сообщение</h3><textarea id="reportReasonInput" rows="3" placeholder="Опишите причину жалобы"></textarea><button class="btn btn-danger" id="submitReportBtn">Отправить жалобу</button><input type="hidden" id="reportMessageId"></div></div>
+
+<script>
+  (function(){
+    "use strict";
+    // ----------  STORAGE KEYS ----------
+    const STORAGE_USERS      = 'cb_users';
+    const STORAGE_CASES      = 'cb_cases';
+    const STORAGE_REQUESTS   = 'cb_requests';
+    const STORAGE_PROFILES   = 'cb_profiles';
+    const STORAGE_IP_MAP     = 'cb_ipmap';
+    const STORAGE_MESSAGES   = 'cb_messages';
+    const STORAGE_REPORTS    = 'cb_reports';      // жалобы на сообщения
+    const STORAGE_SETTINGS   = 'cb_settings';
+    const SESSION_USERS      = 'cb_sessions';
+
+    // ----------  ИНИЦИАЛИЗАЦИЯ ----------
+    function initStorage() {
+      if(!localStorage.getItem(STORAGE_USERS)) localStorage.setItem(STORAGE_USERS, JSON.stringify([{ id:'admin-'+Date.now(), login:'cloyzes', password:'880090012Aa', nickname:'CloyzAdmin', isAdmin:true, userId: Math.floor(100000+Math.random()*900000).toString() }]));
+      if(!localStorage.getItem(STORAGE_CASES)) localStorage.setItem(STORAGE_CASES, JSON.stringify([ { id:'c1', title:'Алексей Документовед', description:'Анализ Telegram-каналов, архивы переписок.', basicData:'@doc_alex, t.me/docs', date: new Date().toLocaleDateString('ru'), authorNick:'system', authorId:'system', isAnonymous:false }, { id:'c2', title:'Екатерина Верста', description:'Восстановление удалённых комментариев на форумах.', basicData:'versta.ru, email', date: new Date().toLocaleDateString('ru'), authorNick:'system', authorId:'system', isAnonymous:false }, { id:'c3', title:'Сергей Редактор', description:'Поиск по архивам GitHub, утечки токенов.', basicData:'github/sergey-red', date: new Date().toLocaleDateString('ru'), authorNick:'system', authorId:'system', isAnonymous:false } ]));
+      if(!localStorage.getItem(STORAGE_REQUESTS)) localStorage.setItem(STORAGE_REQUESTS, '[]');
+      if(!localStorage.getItem(STORAGE_PROFILES)) localStorage.setItem(STORAGE_PROFILES, '{}');
+      if(!localStorage.getItem(STORAGE_IP_MAP)) localStorage.setItem(STORAGE_IP_MAP, '{}');
+      if(!localStorage.getItem(STORAGE_MESSAGES)) localStorage.setItem(STORAGE_MESSAGES, '{}');
+      if(!localStorage.getItem(STORAGE_REPORTS)) localStorage.setItem(STORAGE_REPORTS, '[]');
+      if(!localStorage.getItem(STORAGE_SETTINGS)) localStorage.setItem(STORAGE_SETTINGS, '{"lang":"ru","theme":"dark"}');
+    }
+    initStorage();
+
+    // ----------  ГЕТТЕРЫ / СЕТТЕРЫ ----------
+    const getUsers    = () => JSON.parse(localStorage.getItem(STORAGE_USERS));
+    const saveUsers   = (u) => localStorage.setItem(STORAGE_USERS, JSON.stringify(u));
+    const getCases    = () => JSON.parse(localStorage.getItem(STORAGE_CASES));
+    const saveCases   = (c) => { localStorage.setItem(STORAGE_CASES, JSON.stringify(c)); updateTopBadges(); };
+    const getRequests = () => JSON.parse(localStorage.getItem(STORAGE_REQUESTS));
+    const saveRequests= (r) => localStorage.setItem(STORAGE_REQUESTS, JSON.stringify(r));
+    const getProfiles = () => JSON.parse(localStorage.getItem(STORAGE_PROFILES));
+    const saveProfiles= (p) => localStorage.setItem(STORAGE_PROFILES, JSON.stringify(p));
+    const getIpMap    = () => JSON.parse(localStorage.getItem(STORAGE_IP_MAP));
+    const saveIpMap   = (m) => localStorage.setItem(STORAGE_IP_MAP, JSON.stringify(m));
+    const getMessages = () => JSON.parse(localStorage.getItem(STORAGE_MESSAGES));
+    const saveMessages= (m) => localStorage.setItem(STORAGE_MESSAGES, JSON.stringify(m));
+    const getReports  = () => JSON.parse(localStorage.getItem(STORAGE_REPORTS));
+    const saveReports = (r) => localStorage.setItem(STORAGE_REPORTS, JSON.stringify(r));
+    const getSettings = () => JSON.parse(localStorage.getItem(STORAGE_SETTINGS));
+    const saveSettings= (s) => { localStorage.setItem(STORAGE_SETTINGS, JSON.stringify(s)); applySettings(); };
+    const getSessions = () => JSON.parse(sessionStorage.getItem(SESSION_USERS) || '[]');
+    const saveSessions= (s) => sessionStorage.setItem(SESSION_USERS, JSON.stringify(s));
+    const getCurrentUser = () => { const s = getSessions(); return s.find(u => u.active) || s[0] || null; };
+    const setCurrentUser = (user) => {
+      if(user.blocked) { alert('Аккаунт заблокирован'); return; }
+      let s = getSessions();
+      const idx = s.findIndex(u => u.id === user.id);
+      if(idx >= 0) s[idx] = { ...user, active: true };
+      else s.push({ ...user, active: true });
+      s = s.map(u => ({ ...u, active: u.id === user.id }));
+      saveSessions(s);
+    };
+    const logoutCurrent = () => {
+      let s = getSessions(); const cur = getCurrentUser();
+      if(cur) s = s.filter(u => u.id !== cur.id);
+      saveSessions(s);
+      if(!s.length) { refreshUI(); switchSection('home'); }
+      else { s[0].active = true; saveSessions(s); refreshUI(); }
+    };
+
+    // ----------  ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ----------
+    const escapeHtml = (t) => { const d = document.createElement('div'); d.textContent = t||''; return d.innerHTML; };
+    const getIP = async () => { try { const r = await fetch('https://api.ipify.org?format=json'); return (await r.json()).ip; } catch { return '127.0.0.1'; } };
+    const canRegister = (ip) => (getIpMap()[ip] || 0) < 2;
+    const incrementIp = (ip) => { const m = getIpMap(); m[ip] = (m[ip]||0)+1; saveIpMap(m); };
+    const decrementIp = (ip) => { const m = getIpMap(); if(m[ip]) { m[ip] = Math.max(0, m[ip]-1); saveIpMap(m); } };
+    const genId = () => Math.floor(100000 + Math.random() * 900000).toString();
+    const applySettings = () => {
+      const s = getSettings();
+      document.body.className = s.theme === 'light' ? 'light' : '';
+      document.querySelectorAll('[data-i18n]').forEach(el => el.textContent = (s.lang==='ru'?ru:en)[el.dataset.i18n] || el.dataset.i18n);
+    };
+    const ru = { cases:'Кейсы', analysts:'Аналитики', top:'Топ', rules:'Правила', messages:'Сообщения', propose:'Предложить', profile:'Профиль', settings:'Настройки', admin:'Админ', login:'Вход' };
+    const en = { cases:'Cases', analysts:'Analysts', top:'Top', rules:'Rules', messages:'Messages', propose:'Propose', profile:'Profile', settings:'Settings', admin:'Admin', login:'Login' };
+    
+    // ----------  РЕНДЕРИНГ СЕКЦИЙ ----------
+    const mainContent = document.getElementById('mainContent');
+    const navTabs = document.getElementById('nav-tabs');
+    const userArea = document.getElementById('userArea');
+    let currentSection = 'home';
+    let currentChatPartner = null;
+    let contextMenu = null;
+    const stickers = ['🐱','🐶','🦊','🐼','🐸','🐧','🌟','💫','🎉','📦'];
+
+    function buildSections() {
+      mainContent.innerHTML = `
+        <section id="home-section" class="section active"><h2><i class="fas fa-folder-open"></i> <span data-i18n="cases">Кейсы</span></h2><div id="casesContainer" class="cases-grid"></div></section>
+        <section id="analysts-section" class="section"><h2><i class="fas fa-users"></i> <span data-i18n="analysts">Аналитики</span></h2><div style="display:flex;gap:8px;margin-bottom:16px;"><input id="analystSearch" placeholder="Никнейм или ID" style="flex:1;"><button class="btn-small" id="searchAnalystBtn"><i class="fas fa-search"></i></button></div><div id="analystsResults"></div></section>
+        <section id="top-section" class="section"><h2><i class="fas fa-trophy"></i> <span data-i18n="top">Топ</span></h2><div id="topContainer"></div></section>
+        <section id="rules-section" class="section"><h2><i class="fas fa-gavel"></i> Правила</h2><div class="rules-content"><p>1. Этичность OSINT<br>2. Достоверность<br>3. Уважение<br>4. Модерация<br>5. Анонимность</p></div></section>
+        <section id="messages-section" class="section" style="padding:0;"><div id="chatContainer" class="chat-container"></div></section>
+        <section id="propose-section" class="section"><div class="form-card"><h2>Предложить кейс</h2><form id="proposeForm"><div class="form-group"><label>Цель</label><input id="targetName" required></div><div class="form-group"><label>Основные данные</label><textarea id="basicData" required></textarea></div><div class="form-group"><label>Описание</label><textarea id="caseDesc" required></textarea></div><div class="form-group"><label>Причина</label><textarea id="caseReason" required></textarea></div><div class="form-group"><label>Ссылки</label><input id="caseLinks"></div><div class="form-group"><label><input type="checkbox" id="anonymousCheck"> Анонимно</label></div><button class="btn">Отправить</button></form></div></section>
+        <section id="profile-section" class="section"><h2>Мой профиль</h2><div style="display:flex;gap:20px;background:var(--card);padding:20px;border-radius:20px;margin-bottom:20px;"><div><div class="avatar" id="avatarPreview" style="width:80px;height:80px;"><i class="fas fa-user-circle"></i></div><label class="btn-small" style="margin-top:8px;"><i class="fas fa-upload"></i><input type="file" id="avatarInput" accept="image/*" style="display:none;"></label></div><div style="flex:1;"><div class="form-group"><label>Никнейм</label><input id="profileNickname"></div><div class="form-group"><label>Описание</label><textarea id="profileBio"></textarea></div><div class="form-group"><label>ID</label><input id="profileId" readonly></div><button class="btn-small" id="saveProfileBtn">Сохранить</button></div></div><h3>Мои кейсы</h3><div id="profileCases"></div><h3>Сессии</h3><div id="profileSessions"></div></section>
+        <section id="settings-section" class="section"><div class="form-card"><h2>Настройки</h2><div class="form-group"><label>Язык</label><select id="langSelect"><option value="ru">Русский</option><option value="en">English</option></select></div><div class="form-group"><label>Тема</label><select id="themeSelect"><option value="dark">Тёмная</option><option value="light">Светлая</option></select></div></div></section>
+        <section id="publicProfile-section" class="section"><div id="publicProfileContent"></div></section>
+        <section id="admin-section" class="section"><h2>Админ панель</h2><div class="admin-tabs"><button class="btn-small admin-tab active" data-tab="requests">Заявки</button><button class="btn-small admin-tab" data-tab="cases">Кейсы</button><button class="btn-small admin-tab" data-tab="users">Пользователи</button><button class="btn-small admin-tab" data-tab="blocked">Заблокированные</button><button class="btn-small admin-tab" data-tab="reports">Жалобы</button></div><div id="adminContent"></div></section>
+        <section id="auth-section" class="section"><div class="form-card"><div id="loginBlock"><h2>Вход</h2><form id="loginForm"><input id="loginUsername" placeholder="Логин" required><input type="password" id="loginPassword" placeholder="Пароль" required><button class="btn">Войти</button></form><button id="showRegister">Регистрация</button></div><div id="registerBlock" style="display:none;"><h2>Регистрация</h2><form id="registerForm"><input id="regLogin" placeholder="Логин" required><input id="regNickname" placeholder="Никнейм" required><input type="password" id="regPassword" placeholder="Пароль" required><button class="btn">Зарегистрироваться</button></form><button id="showLogin">Войти</button></div></div></section>
+      `;
+    }
+    buildSections();
+    const sections = {
+      home: document.getElementById('home-section'), analysts: document.getElementById('analysts-section'),
+      top: document.getElementById('top-section'), rules: document.getElementById('rules-section'),
+      messages: document.getElementById('messages-section'), propose: document.getElementById('propose-section'),
+      profile: document.getElementById('profile-section'), settings: document.getElementById('settings-section'),
+      publicProfile: document.getElementById('publicProfile-section'), admin: document.getElementById('admin-section'),
+      auth: document.getElementById('auth-section')
+    };
+
+    function switchSection(id) {
+      Object.values(sections).forEach(s => s.classList.remove('active'));
+      sections[id].classList.add('active');
+      currentSection = id;
+      document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+      document.querySelector(`.nav-btn[data-section="${id}"]`)?.classList.add('active');
+      refreshUI();
+    }
+
+    function refreshUI() {
+      const user = getCurrentUser();
+      const isAdmin = user?.isAdmin || user?.login === 'cloyzes';
+      const isMod = user?.isModerator;
+      // Навигация
+      navTabs.innerHTML = `
+        <button class="nav-btn ${currentSection==='home'?'active':''}" data-section="home"><i class="fas fa-list"></i> <span data-i18n="cases">Кейсы</span></button>
+        <button class="nav-btn ${currentSection==='analysts'?'active':''}" data-section="analysts"><i class="fas fa-users"></i> <span data-i18n="analysts">Аналитики</span></button>
+        <button class="nav-btn ${currentSection==='top'?'active':''}" data-section="top"><i class="fas fa-trophy"></i> <span data-i18n="top">Топ</span></button>
+        <button class="nav-btn ${currentSection==='rules'?'active':''}" data-section="rules"><i class="fas fa-gavel"></i> Правила</button>
+        ${user ? `<button class="nav-btn ${currentSection==='messages'?'active':''}" data-section="messages"><i class="fas fa-comments"></i> <span data-i18n="messages">Сообщения</span></button>` : ''}
+        ${user ? `<button class="nav-btn ${currentSection==='propose'?'active':''}" data-section="propose"><i class="fas fa-plus-circle"></i> <span data-i18n="propose">Предложить</span></button>` : ''}
+        ${user ? `<button class="nav-btn ${currentSection==='profile'?'active':''}" data-section="profile"><i class="fas fa-user"></i> <span data-i18n="profile">Профиль</span></button>` : ''}
+        <button class="nav-btn ${currentSection==='settings'?'active':''}" data-section="settings"><i class="fas fa-cog"></i> <span data-i18n="settings">Настройки</span></button>
+        ${(isAdmin || isMod) ? `<button class="nav-btn ${currentSection==='admin'?'active':''}" data-section="admin"><i class="fas fa-shield-alt"></i> <span data-i18n="admin">Админ</span></button>` : ''}
+        ${!user ? `<button class="nav-btn ${currentSection==='auth'?'active':''}" data-section="auth"><i class="fas fa-sign-in-alt"></i> <span data-i18n="login">Вход</span></button>` : ''}
+      `;
+      document.querySelectorAll('.nav-btn').forEach(b => b.addEventListener('click', () => switchSection(b.dataset.section)));
+      
+      // Область пользователя
+      if(user) {
+        const prof = getProfiles()[user.id] || {};
+        const badges = (prof.badges || []).map(b => `<span class="badge-icon"><i class="fas fa-medal"></i> ${escapeHtml(b)}</span>`).join('');
+        userArea.innerHTML = `<div><i class="fas fa-user-circle"></i> ${escapeHtml(user.nickname)} ${badges} ${isMod?'<span class="mod-badge"><i class="fas fa-gavel"></i> MOD</span>':''} ${isAdmin?'<span class="admin-badge"><i class="fas fa-shield-alt"></i> ADMIN</span>':''}</div>
+          <button class="accounts-btn" id="accountsBtn"><i class="fas fa-users"></i> (${getSessions().length})</button>
+          <button class="logout-btn" id="logoutBtn"><i class="fas fa-sign-out-alt"></i></button>`;
+        document.getElementById('logoutBtn').addEventListener('click', logoutCurrent);
+        document.getElementById('accountsBtn').addEventListener('click', showAccountsModal);
+      } else {
+        userArea.innerHTML = `<span><i class="fas fa-user-lock"></i> Гость</span>`;
+      }
+
+      // Рендер активной секции
+      if(currentSection === 'home') renderCases();
+      else if(currentSection === 'analysts') renderAnalysts();
+      else if(currentSection === 'top') renderTop();
+      else if(currentSection === 'messages') renderChatInterface();
+      else if(currentSection === 'profile') renderProfile();
+      else if(currentSection === 'admin') renderAdminPanel();
+      else if(currentSection === 'settings') {
+        document.getElementById('langSelect').value = getSettings().lang;
+        document.getElementById('themeSelect').value = getSettings().theme;
+      }
+      applySettings();
+    }
+
+    // ----------  АККАУНТЫ (МОДАЛ) ----------
+    function showAccountsModal() {
+      const s = getSessions();
+      document.getElementById('accountsList').innerHTML = s.map(u => `
+        <div class="list-item">
+          <span><i class="fas fa-user-circle"></i> ${escapeHtml(u.nickname)} ${u.active ? '(активен)' : ''}</span>
+          <div>
+            ${!u.active ? `<button class="btn-small switch-acc" data-id="${u.id}">Переключить</button>` : ''}
+            <button class="btn-small btn-danger remove-acc" data-id="${u.id}">Выйти</button>
+          </div>
+        </div>`).join('');
+      document.querySelectorAll('.switch-acc').forEach(b => b.addEventListener('click', () => {
+        const user = getSessions().find(u => u.id === b.dataset.id);
+        if(user) { setCurrentUser(user); refreshUI(); switchSection('home'); document.getElementById('accountsModal').classList.remove('active'); }
+      }));
+      document.querySelectorAll('.remove-acc').forEach(b => b.addEventListener('click', () => {
+        let s = getSessions(); s = s.filter(u => u.id !== b.dataset.id); saveSessions(s);
+        if(!s.length) { refreshUI(); switchSection('home'); } else refreshUI();
+        document.getElementById('accountsModal').classList.remove('active');
+      }));
+      document.getElementById('accountsModal').classList.add('active');
+    }
+    document.getElementById('addAccountBtn').addEventListener('click', () => {
+      document.getElementById('accountsModal').classList.remove('active');
+      switchSection('auth');
+    });
+
+    // ----------  ЧАТ ----------
+    function renderChatInterface() {
+      const user = getCurrentUser(); if(!user) return;
+      const users = getUsers().filter(u => u.id !== user.id && !u.deleted && !u.blocked);
+      const container = document.getElementById('chatContainer');
+      container.innerHTML = `
+        <div class="chat-sidebar">
+          <div class="chat-sidebar-header">Диалоги</div>
+          <div id="dialogsList" style="overflow-y:auto;"></div>
+        </div>
+        <div class="chat-main">
+          <div class="chat-header" id="chatHeader">
+            <div class="chat-avatar avatar" id="chatHeaderAvatar"><i class="fas fa-user-circle"></i></div>
+            <div class="chat-header-info">
+              <div class="chat-header-name">Выберите диалог</div>
+              <div class="chat-header-status"></div>
+            </div>
+          </div>
+          <div class="chat-messages" id="chatMessagesArea"><div class="empty-chat"><div class="sticker">${stickers[Math.floor(Math.random()*stickers.length)]}</div><p>Здесь пока ничего нет...</p></div></div>
+          <div class="chat-input-area" id="chatInputArea" style="display:none;">
+            <input type="text" id="chatMessageInput" placeholder="Сообщение...">
+            <input type="file" id="chatMediaInput" accept="image/*,audio/*" style="display:none;">
+            <button class="btn-small" onclick="document.getElementById('chatMediaInput').click()"><i class="fas fa-paperclip"></i></button>
+            <button class="btn-small" id="sendChatMsgBtn"><i class="fas fa-paper-plane"></i></button>
+          </div>
+        </div>
+      `;
+      const dialogsDiv = document.getElementById('dialogsList');
+      if(users.length === 0) {
+        dialogsDiv.innerHTML = `<div style="padding:20px;text-align:center;">Нет доступных аналитиков</div>`;
+        return;
+      }
+      dialogsDiv.innerHTML = users.map(u => {
+        const prof = getProfiles()[u.id] || {};
+        const dialogId = [user.id, u.id].sort().join('_');
+        const msgs = getMessages()[dialogId] || [];
+        const last = msgs[msgs.length-1];
+        const lastText = last ? (last.type==='text'?last.content:(last.type==='image'?'📷 Фото':'🎵 Аудио')) : '';
+        return `<div class="dialog-item" data-userid="${u.id}">
+          <div class="dialog-avatar avatar">${prof.avatar?`<img src="${prof.avatar}">`:'<i class="fas fa-user-circle"></i>'}</div>
+          <div class="dialog-info"><div class="dialog-name">${escapeHtml(u.nickname)}</div><div class="dialog-lastmsg">${escapeHtml(lastText)}</div></div>
+        </div>`;
+      }).join('');
+      dialogsDiv.querySelectorAll('.dialog-item').forEach(el => el.addEventListener('click', () => openChat(el.dataset.userid)));
+      document.getElementById('sendChatMsgBtn').addEventListener('click', sendChatMessage);
+      document.getElementById('chatMediaInput').addEventListener('change', handleMediaUpload);
+      document.getElementById('chatMessageInput').addEventListener('keypress', e => { if(e.key==='Enter') sendChatMessage(); });
+    }
+
+    function openChat(userId) {
+      const partner = getUsers().find(u => u.id === userId);
+      if(!partner || partner.blocked) return;
+      currentChatPartner = partner;
+      const prof = getProfiles()[partner.id] || {};
+      document.getElementById('chatHeaderAvatar').innerHTML = prof.avatar ? `<img src="${prof.avatar}">` : '<i class="fas fa-user-circle"></i>';
+      document.getElementById('chatHeaderName').textContent = partner.nickname;
+      document.getElementById('chatHeaderStatus').textContent = 'был(а) недавно';
+      document.getElementById('chatInputArea').style.display = 'flex';
+      document.querySelectorAll('.dialog-item').forEach(el => el.classList.remove('active'));
+      document.querySelector(`.dialog-item[data-userid="${userId}"]`)?.classList.add('active');
+      renderChatMessages();
+    }
+
+    function renderChatMessages() {
+      const cur = getCurrentUser(); if(!cur || !currentChatPartner) return;
+      const dialogId = [cur.id, currentChatPartner.id].sort().join('_');
+      const msgs = getMessages()[dialogId] || [];
+      const area = document.getElementById('chatMessagesArea');
+      if(!msgs.length) {
+        area.innerHTML = `<div class="empty-chat"><div class="sticker">${stickers[Math.floor(Math.random()*stickers.length)]}</div><p>Здесь пока ничего нет...</p></div>`;
+        return;
+      }
+      area.innerHTML = msgs.map(m => {
+        const isOwn = m.senderId === cur.id;
+        const sender = isOwn ? cur : currentChatPartner;
+        const prof = getProfiles()[sender.id] || {};
+        return `<div class="message ${isOwn?'own':''}" data-msg-id="${m.id}">
+          <div class="message-avatar avatar">${prof.avatar?`<img src="${prof.avatar}">`:'<i class="fas fa-user-circle"></i>'}</div>
+          <div class="message-content">
+            ${!isOwn ? `<strong>${escapeHtml(sender.nickname)}</strong><br>` : ''}
+            ${m.type==='text' ? escapeHtml(m.content) : (m.type==='image' ? `<img src="${m.content}" style="max-width:200px;border-radius:12px;">` : `<audio controls src="${m.content}"></audio>`)}
+            <div class="message-meta">
+              <span>${new Date(m.time).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</span>
+              ${isOwn ? '<i class="fas fa-check-double"></i>' : ''}
+            </div>
+            <div class="message-actions">
+              ${!isOwn ? `<button class="btn-small btn-outline report-msg" data-id="${m.id}" title="Пожаловаться"><i class="fas fa-flag"></i></button>` : ''}
+              ${isOwn ? `<button class="btn-small btn-outline edit-msg" data-id="${m.id}"><i class="fas fa-pen"></i></button>
+              <button class="btn-small btn-outline delete-msg" data-id="${m.id}"><i class="fas fa-trash"></i></button>` : ''}
+            </div>
+          </div>
+        </div>`;
+      }).join('');
+      area.querySelectorAll('.report-msg').forEach(b => b.addEventListener('click', () => openReportModal(b.dataset.id)));
+      area.querySelectorAll('.edit-msg').forEach(b => b.addEventListener('click', () => editMessage(b.dataset.id)));
+      area.querySelectorAll('.delete-msg').forEach(b => b.addEventListener('click', () => deleteMessage(b.dataset.id)));
+      area.scrollTop = area.scrollHeight;
+    }
+
+    function openReportModal(msgId) {
+      document.getElementById('reportMessageId').value = msgId;
+      document.getElementById('reportModal').classList.add('active');
+    }
+    document.getElementById('submitReportBtn').addEventListener('click', () => {
+      const msgId = document.getElementById('reportMessageId').value;
+      const reason = document.getElementById('reportReasonInput').value.trim();
+      if(!reason) return alert('Укажите причину');
+      const cur = getCurrentUser();
+      const reports = getReports();
+      reports.push({
+        id: Date.now()+'-'+Math.random(),
+        messageId: msgId,
+        reporterId: cur.id,
+        reporterNick: cur.nickname,
+        reason,
+        timestamp: new Date().toISOString(),
+        status: 'pending'
+      });
+      saveReports(reports);
+      document.getElementById('reportModal').classList.remove('active');
+      alert('Жалоба отправлена');
+    });
+
+    function editMessage(msgId) {
+      const cur = getCurrentUser(); if(!cur || !currentChatPartner) return;
+      const dialogId = [cur.id, currentChatPartner.id].sort().join('_');
+      const msgs = getMessages();
+      const msg = msgs[dialogId]?.find(m => m.id === msgId);
+      if(msg && msg.type === 'text') {
+        const newText = prompt('Редактировать', msg.content);
+        if(newText !== null && newText.trim()) { msg.content = newText.trim(); saveMessages(msgs); renderChatMessages(); }
+      }
+    }
+    function deleteMessage(msgId) {
+      const cur = getCurrentUser(); if(!cur || !currentChatPartner) return;
+      const dialogId = [cur.id, currentChatPartner.id].sort().join('_');
+      const msgs = getMessages();
+      if(msgs[dialogId]) { msgs[dialogId] = msgs[dialogId].filter(m => m.id !== msgId); saveMessages(msgs); renderChatMessages(); }
+    }
+    function sendChatMessage() {
+      const cur = getCurrentUser(); if(!cur || !currentChatPartner) return;
+      // Проверка спам-блока
+      const prof = getProfiles()[cur.id] || {};
+      if(prof.spamBlock) {
+        const dialogId = [cur.id, currentChatPartner.id].sort().join('_');
+        const msgs = getMessages()[dialogId] || [];
+        const partnerWrote = msgs.some(m => m.senderId === currentChatPartner.id);
+        if(!partnerWrote) { alert('⛔ Вы ограничены в отправке сообщений первым.'); return; }
+      }
+      const input = document.getElementById('chatMessageInput');
+      const text = input.value.trim();
+      if(!text) return;
+      const dialogId = [cur.id, currentChatPartner.id].sort().join('_');
+      const msgs = getMessages();
+      if(!msgs[dialogId]) msgs[dialogId] = [];
+      msgs[dialogId].push({ id: Date.now()+'-'+Math.random().toString(36), senderId: cur.id, content: text, type: 'text', time: new Date().toISOString() });
+      saveMessages(msgs);
+      input.value = '';
+      renderChatMessages();
+    }
+    function handleMediaUpload(e) {
+      const file = e.target.files[0]; if(!file || !currentChatPartner) return;
+      const reader = new FileReader();
+      reader.onload = ev => {
+        const cur = getCurrentUser();
+        const dialogId = [cur.id, currentChatPartner.id].sort().join('_');
+        const msgs = getMessages();
+        if(!msgs[dialogId]) msgs[dialogId] = [];
+        const type = file.type.startsWith('image') ? 'image' : 'audio';
+        msgs[dialogId].push({ id: Date.now()+'-'+Math.random().toString(36), senderId: cur.id, content: ev.target.result, type, time: new Date().toISOString() });
+        saveMessages(msgs);
+        renderChatMessages();
+      };
+      reader.readAsDataURL(file);
+    }
+
+    // ----------  КЕЙСЫ, АНАЛИТИКИ, ТОП, ПРОФИЛЬ ----------
+    function renderCases() {
+      const cases = getCases();
+      document.getElementById('casesContainer').innerHTML = cases.map(c => `
+        <div class="case-card" data-id="${c.id}">
+          <h3>${escapeHtml(c.title)}</h3>
+          <p>${escapeHtml(c.description)}</p>
+          <small>${escapeHtml(c.date)} | ${escapeHtml(c.authorNick)}</small>
+        </div>`).join('');
+      document.querySelectorAll('.case-card').forEach(c => c.addEventListener('click', () => showCaseModal(c.dataset.id)));
+    }
+    function showCaseModal(id) {
+      const c = getCases().find(c => c.id === id); if(!c) return;
+      document.getElementById('modalTitle').textContent = c.title;
+      document.getElementById('modalBody').innerHTML = `<p><strong>Данные:</strong> ${escapeHtml(c.basicData)}</p><p>${escapeHtml(c.description)}</p>`;
+      document.getElementById('caseModal').classList.add('active');
+    }
+    function renderAnalysts(q='') {
+      const users = getUsers().filter(u => !u.deleted && !u.blocked);
+      const filtered = q ? users.filter(u => u.nickname.toLowerCase().includes(q.toLowerCase()) || u.userId === q) : users;
+      const cont = document.getElementById('analystsResults');
+      cont.innerHTML = filtered.map(u => {
+        const prof = getProfiles()[u.id] || {};
+        const badges = (prof.badges || []).map(b => `<span class="badge-icon"><i class="fas fa-medal"></i> ${escapeHtml(b)}</span>`).join('');
+        return `<div class="list-item">
+          <div style="display:flex;align-items:center;gap:12px;">
+            <div class="avatar">${prof.avatar?`<img src="${prof.avatar}">`:'<i class="fas fa-user-circle"></i>'}</div>
+            <div><strong>${escapeHtml(u.nickname)}</strong> ${badges}<br><small>ID: ${u.userId}</small></div>
+          </div>
+          <div>
+            <button class="btn-small open-profile" data-id="${u.id}">Профиль</button>
+            <button class="btn-small open-chat" data-id="${u.id}">Написать</button>
+          </div>
+        </div>`;
+      }).join('');
+      cont.querySelectorAll('.open-profile').forEach(b => b.addEventListener('click', () => showPublicProfile(b.dataset.id)));
+      cont.querySelectorAll('.open-chat').forEach(b => b.addEventListener('click', () => { switchSection('messages'); setTimeout(() => openChat(b.dataset.id), 50); }));
+    }
+    document.getElementById('searchAnalystBtn').addEventListener('click', () => renderAnalysts(document.getElementById('analystSearch').value.trim()));
+
+    function showPublicProfile(userId) {
+      const user = getUsers().find(u => u.id === userId); if(!user) return;
+      const prof = getProfiles()[userId] || {};
+      const badges = (prof.badges || []).map(b => `<span class="badge-icon"><i class="fas fa-medal"></i> ${escapeHtml(b)}</span>`).join('');
+      const cases = getCases().filter(c => c.authorId === userId && !c.isAnonymous);
+      document.getElementById('publicProfileContent').innerHTML = `
+        <div style="display:flex;gap:20px;background:var(--card);padding:20px;border-radius:20px;margin-bottom:20px;">
+          <div class="avatar" style="width:80px;height:80px;">${prof.avatar?`<img src="${prof.avatar}">`:'<i class="fas fa-user-circle"></i>'}</div>
+          <div><h2>${escapeHtml(user.nickname)} ${badges}</h2><p>ID: ${user.userId}</p><p>${escapeHtml(prof.bio||'')}</p></div>
+        </div>
+        <h3>Кейсы</h3>
+        ${cases.map(c => `<div class="case-card"><h4>${escapeHtml(c.title)}</h4><p>${escapeHtml(c.description)}</p></div>`).join('')}
+        <button class="btn-small" onclick="switchSection('analysts')"><i class="fas fa-arrow-left"></i> Назад</button>
+      `;
+      switchSection('publicProfile');
+    }
+
+    function renderTop() {
+      const users = getUsers().filter(u => !u.deleted && !u.blocked);
+      const cases = getCases();
+      const counts = {};
+      cases.forEach(c => { if(c.authorId && c.authorId!=='system') counts[c.authorId] = (counts[c.authorId]||0)+1; });
+      const sorted = users.filter(u => counts[u.id]).sort((a,b) => (counts[b.id]||0) - (counts[a.id]||0));
+      document.getElementById('topContainer').innerHTML = sorted.map((u,i) => {
+        const prof = getProfiles()[u.id] || {};
+        const badges = (prof.badges || []).map(b => `<span class="badge-icon"><i class="fas fa-medal"></i> ${escapeHtml(b)}</span>`).join('');
+        return `<div class="list-item">
+          <div><span style="font-size:20px;font-weight:bold;color:var(--accent);">#${i+1}</span> ${escapeHtml(u.nickname)} ${badges} — ${counts[u.id]} кейсов</div>
+        </div>`;
+      }).join('');
+    }
+
+    function renderProfile() {
+      const user = getCurrentUser(); if(!user) return;
+      const prof = getProfiles()[user.id] || {};
+      document.getElementById('profileNickname').value = user.nickname;
+      document.getElementById('profileBio').value = prof.bio || '';
+      document.getElementById('profileId').value = user.userId;
+      const av = document.getElementById('avatarPreview');
+      av.innerHTML = prof.avatar ? `<img src="${prof.avatar}">` : '<i class="fas fa-user-circle"></i>';
+      const myCases = getCases().filter(c => c.authorId === user.id && !c.isAnonymous);
+      document.getElementById('profileCases').innerHTML = myCases.map(c => `<div class="case-card"><h4>${escapeHtml(c.title)}</h4><p>${escapeHtml(c.description)}</p></div>`).join('');
+      const sessions = prof.sessions || [];
+      document.getElementById('profileSessions').innerHTML = sessions.map(s => `<div>${escapeHtml(s.device)} | IP: ${s.ip} | ${new Date(s.time).toLocaleString()}</div>`).join('');
+    }
+    document.getElementById('saveProfileBtn').addEventListener('click', () => {
+      const user = getCurrentUser(); if(!user) return;
+      const nick = document.getElementById('profileNickname').value.trim();
+      const bio = document.getElementById('profileBio').value.trim();
+      if(nick) {
+        const users = getUsers(); const idx = users.findIndex(u => u.id === user.id);
+        if(idx >= 0) { users[idx].nickname = nick; saveUsers(users); setCurrentUser(users[idx]); }
+      }
+      const prof = getProfiles(); prof[user.id] = { ...prof[user.id], bio }; saveProfiles(prof);
+      refreshUI();
+    });
+    document.getElementById('avatarInput').addEventListener('change', e => {
+      const f = e.target.files[0]; if(!f) return;
+      const r = new FileReader();
+      r.onload = ev => { const prof = getProfiles(); prof[getCurrentUser().id] = { ...prof[getCurrentUser().id], avatar: ev.target.result }; saveProfiles(prof); renderProfile(); };
+      r.readAsDataURL(f);
+    });
+
+    // ----------  АДМИН-ПАНЕЛЬ ----------
+    function renderAdminPanel() {
+      const container = document.getElementById('adminContent');
+      const activeTab = document.querySelector('.admin-tab.active')?.dataset.tab || 'requests';
+      if(activeTab === 'requests') {
+        const reqs = getRequests();
+        container.innerHTML = reqs.map(r => `<div class="list-item"><div><strong>${escapeHtml(r.targetName)}</strong> от ${escapeHtml(r.submittedByNick)}<br>${escapeHtml(r.description)}</div><div><button class="btn-small approve-req" data-id="${r.id}">Одобрить</button><button class="btn-small btn-danger reject-req" data-id="${r.id}">Отклонить</button></div></div>`).join('');
+        container.querySelectorAll('.approve-req').forEach(b => b.addEventListener('click', () => {
+          const req = getRequests().find(r => r.id === b.dataset.id);
+          if(req) {
+            const cases = getCases();
+            cases.push({ id:'case-'+Date.now(), title:req.targetName, description:req.description, basicData:req.basicData, reason:req.reason, links:req.links, date:new Date().toLocaleDateString(), authorNick:req.isAnonymous?'Аноним':req.submittedByNick, authorId:req.isAnonymous?'anonymous':req.userId, isAnonymous:req.isAnonymous });
+            saveCases(cases);
+            saveRequests(getRequests().filter(r => r.id !== req.id));
+            renderAdminPanel();
+          }
+        }));
+        container.querySelectorAll('.reject-req').forEach(b => b.addEventListener('click', () => { saveRequests(getRequests().filter(r => r.id !== b.dataset.id)); renderAdminPanel(); }));
+      } else if(activeTab === 'cases') {
+        container.innerHTML = getCases().map(c => `<div class="list-item"><span>${escapeHtml(c.title)}</span> <button class="btn-small btn-danger delete-case" data-id="${c.id}">Удалить</button></div>`).join('');
+        container.querySelectorAll('.delete-case').forEach(b => b.addEventListener('click', () => { saveCases(getCases().filter(c => c.id !== b.dataset.id)); renderAdminPanel(); }));
+      } else if(activeTab === 'users') {
+        const users = getUsers().filter(u => !u.isAdmin && !u.deleted && !u.blocked);
+        container.innerHTML = users.map(u => `<div class="list-item"><span>${escapeHtml(u.nickname)} (ID: ${u.userId})</span><div><button class="btn-small badge-btn" data-id="${u.id}">Значок</button><button class="btn-small spam-btn" data-id="${u.id}">${getProfiles()[u.id]?.spamBlock ? 'Снять спам-блок' : 'Спам-блок'}</button><button class="btn-small btn-danger block-btn" data-id="${u.id}">Заблокировать</button></div></div>`).join('');
+        container.querySelectorAll('.badge-btn').forEach(b => b.addEventListener('click', () => { document.getElementById('badgeUserId').value = b.dataset.id; document.getElementById('badgeModal').classList.add('active'); }));
+        container.querySelectorAll('.spam-btn').forEach(b => b.addEventListener('click', () => {
+          const userId = b.dataset.id; const prof = getProfiles(); if(!prof[userId]) prof[userId] = {};
+          prof[userId].spamBlock = !prof[userId].spamBlock; saveProfiles(prof); renderAdminPanel();
+        }));
+        container.querySelectorAll('.block-btn').forEach(b => b.addEventListener('click', () => { document.getElementById('blockUserId').value = b.dataset.id; document.getElementById('blockModal').classList.add('active'); }));
+      } else if(activeTab === 'blocked') {
+        const users = getUsers().filter(u => u.blocked);
+        container.innerHTML = users.map(u => `<div class="list-item"><span>${escapeHtml(u.nickname)} (ID: ${u.userId})</span> <button class="btn-small unblock-btn" data-id="${u.id}">Разблокировать</button></div>`).join('');
+        container.querySelectorAll('.unblock-btn').forEach(b => b.addEventListener('click', () => { const users=getUsers(); const idx=users.findIndex(u=>u.id===b.dataset.id); if(idx>=0){ users[idx].blocked=false; saveUsers(users); renderAdminPanel(); } }));
+      } else if(activeTab === 'reports') {
+        const reports = getReports();
+        container.innerHTML = reports.map(r => {
+          const msg = (() => { for(let d in getMessages()) { const m = getMessages()[d].find(m => m.id === r.messageId); if(m) return m; } return null; })();
+          return `<div class="list-item"><div><strong>Жалоба от ${escapeHtml(r.reporterNick)}</strong><br>Причина: ${escapeHtml(r.reason)}<br>Сообщение: ${msg ? escapeHtml(msg.content) : '(удалено)'}</div><div><button class="btn-small resolve-report" data-id="${r.id}">Рассмотрено</button></div></div>`;
+        }).join('');
+        container.querySelectorAll('.resolve-report').forEach(b => b.addEventListener('click', () => { saveReports(getReports().filter(r => r.id !== b.dataset.id)); renderAdminPanel(); }));
+      }
+    }
+    document.querySelectorAll('.admin-tab').forEach(b => b.addEventListener('click', () => { document.querySelectorAll('.admin-tab').forEach(t=>t.classList.remove('active')); b.classList.add('active'); renderAdminPanel(); }));
+
+    // Выдача значков
+    document.getElementById('badgeSelect').innerHTML = ['👑 Корона','👁️ Всевидящий','💪 Сильнейший','☀️ Солнце OSINT','🌙 Луна OSINT','⭐ N°1 России OSINT'].map(b => `<option>${b}</option>`).join('');
+    document.getElementById('confirmBadgeBtn').addEventListener('click', () => {
+      const userId = document.getElementById('badgeUserId').value;
+      let badge = document.getElementById('badgeSelect').value;
+      if(badge === 'custom') badge = document.getElementById('customBadgeInput').value.trim();
+      if(!badge) return;
+      const prof = getProfiles(); if(!prof[userId]) prof[userId] = {};
+      if(!prof[userId].badges) prof[userId].badges = [];
+      prof[userId].badges.push(badge); saveProfiles(prof);
+      document.getElementById('badgeModal').classList.remove('active');
+      renderAdminPanel();
+    });
+    // Блокировка
+    document.getElementById('confirmBlockBtn').addEventListener('click', () => {
+      const userId = document.getElementById('blockUserId').value;
+      const reason = document.getElementById('blockReasonInput').value.trim();
+      const users = getUsers(); const idx = users.findIndex(u => u.id === userId);
+      if(idx >= 0 && !users[idx].isAdmin) {
+        users[idx].blocked = true; users[idx].blockReason = reason; saveUsers(users);
+        const prof = getProfiles()[userId] || {};
+        if(prof.sessions?.[0]?.ip) decrementIp(prof.sessions[0].ip);
+        // Разлогинить
+        let sessions = getSessions(); sessions = sessions.filter(u => u.id !== userId); saveSessions(sessions);
+      }
+      document.getElementById('blockModal').classList.remove('active');
+      renderAdminPanel();
+      refreshUI();
+    });
+
+    // Auth
+    document.getElementById('showRegister').addEventListener('click', () => { document.getElementById('loginBlock').style.display='none'; document.getElementById('registerBlock').style.display='block'; });
+    document.getElementById('showLogin').addEventListener('click', () => { document.getElementById('registerBlock').style.display='none'; document.getElementById('loginBlock').style.display='block'; });
+    document.getElementById('loginForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const login = document.getElementById('loginUsername').value.trim();
+      const pwd = document.getElementById('loginPassword').value;
+      const user = getUsers().find(u => u.login === login && u.password === pwd);
+      if(!user) return alert('Неверные данные');
+      if(user.blocked) return alert('Аккаунт этого пользователя был заблокирован администрацией за нарушения правил платформы');
+      const ip = await getIP();
+      const prof = getProfiles(); if(!prof[user.id]) prof[user.id] = { sessions: [] };
+      prof[user.id].sessions.push({ device: navigator.userAgent, ip, time: new Date().toISOString() }); saveProfiles(prof);
+      setCurrentUser(user); refreshUI(); switchSection('home');
+    });
+    document.getElementById('registerForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const login = document.getElementById('regLogin').value.trim(), nick = document.getElementById('regNickname').value.trim(), pwd = document.getElementById('regPassword').value;
+      if(!login||!nick||!pwd) return;
+      if(getUsers().find(u => u.login === login)) return alert('Логин занят');
+      const ip = await getIP(); if(!canRegister(ip)) return alert('Лимит аккаунтов (2)');
+      const newUser = { id:'user-'+Date.now(), login, password:pwd, nickname:nick, userId:genId(), isAdmin:false };
+      const users = getUsers(); users.push(newUser); saveUsers(users); incrementIp(ip);
+      const prof = getProfiles(); prof[newUser.id] = { sessions: [{ device: navigator.userAgent, ip, time: new Date().toISOString() }] }; saveProfiles(prof);
+      setCurrentUser(newUser); refreshUI(); switchSection('home');
+    });
+    document.getElementById('proposeForm').addEventListener('submit', (e) => {
+      e.preventDefault(); const user = getCurrentUser(); if(!user) return;
+      const req = { id:'req-'+Date.now(), userId:user.id, submittedByNick:user.nickname, targetName:document.getElementById('targetName').value.trim(), basicData:document.getElementById('basicData').value.trim(), description:document.getElementById('caseDesc').value.trim(), reason:document.getElementById('caseReason').value.trim(), links:document.getElementById('caseLinks').value.trim(), isAnonymous:document.getElementById('anonymousCheck').checked };
+      const reqs = getRequests(); reqs.push(req); saveRequests(reqs);
+      alert('Заявка отправлена'); switchSection('home');
+    });
+    document.getElementById('langSelect').addEventListener('change', e => { const s=getSettings(); s.lang=e.target.value; saveSettings(s); });
+    document.getElementById('themeSelect').addEventListener('change', e => { const s=getSettings(); s.theme=e.target.value; saveSettings(s); });
+
+    function updateTopBadges() {
+      const users = getUsers().filter(u => !u.deleted && !u.blocked);
+      const cases = getCases(); const counts = {};
+      cases.forEach(c => { if(c.authorId && c.authorId!=='system') counts[c.authorId] = (counts[c.authorId]||0)+1; });
+      const sorted = users.filter(u => counts[u.id]).sort((a,b) => (counts[b.id]||0) - (counts[a.id]||0));
+      const profs = getProfiles(); const badges = ['👑 Корона','👁️ Всевидящий','💪 Сильнейший'];
+      Object.values(profs).forEach(p => { if(p.badges) p.badges = p.badges.filter(b => !badges.includes(b)); });
+      sorted.slice(0,3).forEach((u,i) => { if(!profs[u.id]) profs[u.id]={}; if(!profs[u.id].badges) profs[u.id].badges=[]; if(!profs[u.id].badges.includes(badges[i])) profs[u.id].badges.push(badges[i]); });
+      saveProfiles(profs);
+    }
+
+    refreshUI(); switchSection('home');
+  })();
+</script>
+</body>
+</html>
